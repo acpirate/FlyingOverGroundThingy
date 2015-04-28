@@ -63,9 +63,11 @@ public class ChumpController : MonoBehaviour {
 		Vector3 panicDestination=(panicHeading.normalized*Constants.mapRadius)+transform.position;
 		panicDestination.y=transform.position.y;
 
-		Debug.Log(panicDestination);
-		myNav.SetDestination(panicDestination);
+		//Debug.Log(panicDestination);
+			if (myNav.enabled)
+			myNav.SetDestination(panicDestination);
 
+	
 	}
 
 	//called when the chump stops panicing
@@ -97,9 +99,11 @@ public class ChumpController : MonoBehaviour {
 		Vector3 splatPosition=new Vector3(transform.position.x,-9.94f,transform.position.z);
 		Quaternion splatRotation=Quaternion.Euler(new Vector3(90f,0f,0f));
 
-		Destroy(gameObject);
 		Instantiate(chumpCorpse,chumpCorpsePosition,chumpCorpseRotation);
 		Instantiate(bloodSplat,splatPosition,splatRotation);
+		GetComponent<NavMeshAgent>().enabled=false;
+		Destroy(gameObject);
+
 	
 
 	}
