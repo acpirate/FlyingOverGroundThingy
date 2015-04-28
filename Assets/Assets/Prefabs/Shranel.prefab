@@ -127,7 +127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57d41d0051e814185aa23549a7f2e071, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  explosion: {fileID: 161338, guid: af957c660a8024857abb2eb4588ee41e, type: 2}
+  explosion: {fileID: 100008, guid: 465b6d35f1a36431f88874f292a0373d, type: 2}
   killRadius: 4
   chumpCorpse: {fileID: 151164, guid: b8317e790f55b4e889acc8a236713cb2, type: 2}
 --- !u!1001 &100100000

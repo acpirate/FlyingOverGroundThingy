@@ -11,7 +11,7 @@ public class ExplodeOnFloorHit : MonoBehaviour {
 	{
 		if (col.gameObject.CompareTag("Ground")) 
 		{
-			Instantiate(explosion,transform.position,transform.rotation);
+			Destroy(Instantiate(explosion,transform.position,transform.rotation),5f);
 			KillChumpsInRadius();
 			PanicChumpsInRadius();
 
