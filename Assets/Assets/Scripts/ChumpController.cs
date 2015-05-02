@@ -3,7 +3,7 @@ using System.Collections;
 
 public class ChumpController : MonoBehaviour {
 
-	enum CHUMPSTATE { WANDER,PANIC};
+	enum CHUMPSTATE { WANDER, PANIC, HUNTING, SHOOTING};
 
 	public float speedMin;
 	public float speedMax;
@@ -19,26 +19,28 @@ public class ChumpController : MonoBehaviour {
 	//Rigidbody myBody;
 	private NavMeshAgent myNav;
 	private Color normalColor;
-	private Material myMaterial;;
+	private Material myMaterial;
 	private AnnouncerController announcerController;
+	private bool isHostile=false;
 
 
 	void Awake()
 	{
 		announcerController=GameObject.FindGameObjectWithTag("Announcer").GetComponent<AnnouncerController>();
 		announcerController.OnUnitExplode+=ExplosionResponse;
+		announcerController.OnChumpDied+=ChumpDiedResponse;
 
 		myMaterial=GetComponent<MeshRenderer>().material;
 		normalColor=myMaterial.color;
 		
 		myState=CHUMPSTATE.WANDER;
-		//myBody=GetComponent<Rigidbody>();
 		myNav=GetComponent<NavMeshAgent>();
 	}
 
 	void OnDestroy() 
 	{
 		announcerController.OnUnitExplode-=ExplosionResponse;
+		announcerController.OnChumpDied-=ChumpDiedResponse;
 	}
 
 	// Use this for initialization
@@ -64,10 +66,19 @@ public class ChumpController : MonoBehaviour {
 		}
 	}
 
-	//called by the explosion or other item if the chump can see it
-	public void ActivatePanic(Vector3 panicCauseLocation)
+	//turn on hostile state
+	void MakeHostile()
 	{
-		panicEndTime=Time.time+panicDuration;
+		normalColor=Color.red;
+		isHostile=true;
+		myMaterial.color=normalColor;
+	}
+
+
+	//activate panic state, change color to panic color, increase speed to panic speed, choose panic destination directly
+	//opposite from panice cause location
+	void ActivatePanic(Vector3 panicCauseLocation)
+	{
 		myState=CHUMPSTATE.PANIC;
 		myMaterial.color=Color.yellow;
 		myNav.speed=speedMax*1.5f;
@@ -83,7 +94,7 @@ public class ChumpController : MonoBehaviour {
 	
 	}
 
-	//called when the chump stops panicing
+	//turn off panic, return to normal color and activate wander state
 	void DeactivatePanic()
 	{
 		myState=CHUMPSTATE.WANDER;
@@ -91,7 +102,7 @@ public class ChumpController : MonoBehaviour {
 		ChumpWander();
 	}
 
-	//chump panicing behavior
+	//check every frame to see if the unit made it to its panic position, if it did then turn off panic
 	void PanicAction()
 	{
 		Vector3 offset = myNav.destination - transform.position;
@@ -101,8 +112,8 @@ public class ChumpController : MonoBehaviour {
 
 	}
 
-	//called when the chump is killed
-	public void ChumpDie()
+	//destory self, create a randomly positioned and rotated corpse
+	void ChumpDie()
 	{				
 		Quaternion chumpCorpseRotation=Quaternion.Euler(
 			new Vector3(90f,0,Random.Range(0.0f,360.0f)));
@@ -115,12 +126,29 @@ public class ChumpController : MonoBehaviour {
 		Instantiate(chumpCorpse,chumpCorpsePosition,chumpCorpseRotation);
 		Instantiate(bloodSplat,splatPosition,splatRotation);
 		GetComponent<NavMeshAgent>().enabled=false;
+
+		//announce that he died
+		announcerController.AnnounceChumpDied(gameObject);
 		Destroy(gameObject);
 
 	
 
 	}
 
+	//react to chump died event, set self to hostile if within vision radius
+	void ChumpDiedResponse(GameObject chumpThatDied)
+	{
+		Vector3 offset =  chumpThatDied.transform.position - transform.position;
+		
+		float squareDistance = offset.sqrMagnitude;
+		
+		if (squareDistance < Constants.chumpVisionRadius * Constants.chumpVisionRadius )
+		{
+			MakeHostile();
+		}
+	}
+
+	//handle receiving an explosion event, if the unit is within the radius kill it, if the explosion is in sight range panic
 	void ExplosionResponse(GameObject explodedUnit, float explodeRaidus)
 	{
 		Vector3 offset =  explodedUnit.transform.position - transform.position;
@@ -137,17 +165,13 @@ public class ChumpController : MonoBehaviour {
 			ActivatePanic(explodedUnit.transform.position);
 		}
 
-
-		//Debug.Log("there was an explosion!");
 	}
 
-	//chump wandering behavior
+	//choose a random speed, random destination, and a random time when to change the chumps mind and go somewher else
 	void ChumpWander() {
-		//float rotationHolder=Random.Range(1,360);
 		float speedHolder=Random.Range(speedMin,speedMax);
 
-		//transform.rotation=Quaternion.Euler(0,rotationHolder,0);
-		//myBody.velocity=transform.forward*speedHolder;
+
 		Vector3 myDestination=new Vector3(Constants.RandomAroundRadius()*.75f,
 		                                  transform.position.y,
 		                                  Constants.RandomAroundRadius()*.75f);
