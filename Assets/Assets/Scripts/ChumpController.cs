@@ -19,17 +19,30 @@ public class ChumpController : MonoBehaviour {
 	//Rigidbody myBody;
 	private NavMeshAgent myNav;
 	private Color normalColor;
-	private Material myMaterial;
-	private float panicEndTime;
+	private Material myMaterial;;
+	private AnnouncerController announcerController;
 
-	// Use this for initialization
-	void Start () {
+
+	void Awake()
+	{
+		announcerController=GameObject.FindGameObjectWithTag("Announcer").GetComponent<AnnouncerController>();
+		announcerController.OnUnitExplode+=ExplosionResponse;
+
 		myMaterial=GetComponent<MeshRenderer>().material;
 		normalColor=myMaterial.color;
-
+		
 		myState=CHUMPSTATE.WANDER;
 		//myBody=GetComponent<Rigidbody>();
 		myNav=GetComponent<NavMeshAgent>();
+	}
+
+	void OnDestroy() 
+	{
+		announcerController.OnUnitExplode-=ExplosionResponse;
+	}
+
+	// Use this for initialization
+	void Start () {
 		ChumpWander();
 	}
 	
@@ -106,6 +119,26 @@ public class ChumpController : MonoBehaviour {
 
 	
 
+	}
+
+	void ExplosionResponse(GameObject explodedUnit, float explodeRaidus)
+	{
+		Vector3 offset =  explodedUnit.transform.position - transform.position;
+
+		float squareDistance = offset.sqrMagnitude;
+
+		if (squareDistance < explodeRaidus * explodeRaidus )
+		{
+			ChumpDie();
+		}
+
+		if (squareDistance < Constants.chumpVisionRadius * Constants.chumpVisionRadius)
+		{
+			ActivatePanic(explodedUnit.transform.position);
+		}
+
+
+		//Debug.Log("there was an explosion!");
 	}
 
 	//chump wandering behavior
