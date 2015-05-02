@@ -4,8 +4,11 @@ using System.Collections;
 public class HazardController : MonoBehaviour {
 
 	public GameObject explosion;
+	public GameObject asteroidLoot;
 	public AudioClip explosionSound;
 	public float heatMax;
+	public int lootMin;
+	public int lootMax;
 
 	float heatLevel;
 
@@ -48,9 +51,20 @@ public class HazardController : MonoBehaviour {
 
 		if (heatLevel>=heatMax)
 		{
-			GetComponent<DestructibleObject>().Explode();
-			Instantiate(explosion,transform.position,transform.rotation);
+			LaserExplode();
 		}
+	}
+
+	void LaserExplode() {
+
+		for (int i=0;i<Random.Range(lootMin,lootMax);i++) 
+		{
+			Instantiate(asteroidLoot,transform.position,transform.rotation);
+		}
+
+
+		GetComponent<DestructibleObject>().Explode();
+		Instantiate(explosion,transform.position,transform.rotation);
 	}
 
 }
